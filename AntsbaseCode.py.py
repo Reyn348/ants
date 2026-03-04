@@ -44,6 +44,9 @@ def Main():
             NumberOfStages = int(input("Enter number of stages to advance by: "))
             ThisSimulation.AdvanceStage(NumberOfStages)
             print(f"Simulation moved on {NumberOfStages} stages" + "\n")
+        elif Choice == '9':
+            if input('Are you sure you want to quit? Y/N ').upper() == 'N':
+                Choice = ""
     input()
 
 def DisplayMenu():
@@ -372,6 +375,9 @@ class Ant(Entity):
 
     def GetTypeOfAnt(self):
         return self._TypeOfAnt
+    
+    def GetAge(self):
+        return self._Stages
 
 class QueenAnt(Ant):
     def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
@@ -461,6 +467,18 @@ class Nest(Entity):
                         self._NumberOfQueens += 1
                     else:
                         Ants.append(WorkerAnt(self._Row, self._Column, self._Row, self._Column))
+        Count = 0
+        for A in range (0, len(Ants)):
+            try:
+                if Ants[A].GetAge() > 14:
+                    if Ants[A].GetTypeOfAnt() == "queen":
+                       self._NumberOfQueens -= 1
+                    Ants.pop(A)
+                    Count += 1
+            except:
+                pass
+        if Count > 0:
+            print(f"{Count} ants have died of old age")
         return Nests, Ants, Pheromones
 
 class Pheromone(Entity):
