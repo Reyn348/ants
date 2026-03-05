@@ -273,6 +273,24 @@ class Simulation():
                     A.ChooseCellToMoveTo(self.__GetIndicesOfNeighbours(A.GetRow(), A.GetColumn()), self.__GetIndexOfNeighbourWithStrongestPheromone(A.GetRow(), A.GetColumn()))
             for N in self._Nests:
                 self._Nests, self._Ants, self._Pheromones = N.AdvanceStage(self._Nests, self._Ants, self._Pheromones)
+                if len(self._Ants) == 0:
+                    self._EndSim = True
+                    self._EndReason = 'All the ants are dead'
+        for Row in range(1, self._NumberOfRows + 1):
+            for Column in range(1, self._NumberOfColumns + 1):
+                if self._Grid[self.__GetIndex(Row, Column)].GetAmountOfFood() == 0:
+                    self._NoFood = True
+                else:
+                    self._NoFood = False
+        if self._NoFood:
+            self._EndSim = True
+            self._EndReason = 'All the food is gone'
+ 
+    def HasSimulationEnded(self):
+        return self._EndSim
+ 
+    def GetEndReason(self):
+        return self._EndReason
 
 class Entity():
     def __init__(self, StartRow, StartColumn):
