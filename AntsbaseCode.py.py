@@ -169,6 +169,9 @@ class Simulation():
                     Allowed = False
             self.AddFoodToCell(Row, Column,500)
 
+    def GetGridSize(self):
+        return self._NumberOfColumns
+
     def SetUpANestAt(self, Row, Column):
         self._Nests.append(Nest(Row, Column, self._StartingFoodInNest))
         self._Ants.append(QueenAnt(Row, Column, Row, Column))
@@ -331,11 +334,18 @@ class Simulation():
                     if A.GetFoodCarried() > 0:
                         self.UpdateAntsPheromoneInCell(A)
                     A.ChooseCellToMoveTo(self.__GetIndicesOfNeighbours(A.GetRow(), A.GetColumn()), self.__GetIndexOfNeighbourWithStrongestPheromone(A.GetRow(), A.GetColumn()))
+                if A.GetTypeOfAnt() == 'flying':
+                    if A.GetAge() == 3:
+                        Rand_row = random.randint(0, Simulation.GetGridSize)
+                        Rand_col = random.randint(0, Simulation.GetGridSize)
+                        Rand_Index = Simulation.__GetIndex(Rand_row, Rand_col)
+                        for C in 
+
             for N in self._Nests:
                 self._Nests, self._Ants, self._Pheromones = N.AdvanceStage(self._Nests, self._Ants, self._Pheromones)
-                if len(self._Ants) == 0:
-                    self._EndSim = True
-                    self._EndReason = 'All the ants are dead'
+        if len(self._Ants) == 0:
+            self._EndSim = True
+            self._EndReason = 'All the ants are dead'
         for Row in range(1, self._NumberOfRows + 1):
             for Column in range(1, self._NumberOfColumns + 1):
                 if self._Grid[self.__GetIndex(Row, Column)].GetAmountOfFood() == 0:
@@ -463,6 +473,18 @@ class QueenAnt(Ant):
         super().__init__(StartRow, StartColumn, NestInRow, NestInColumn)
         self._TypeOfAnt = "queen"
 
+class FlyingAnt(Ant):
+    def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
+        super().__init__(StartRow, StartColumn, NestInRow, NestInColumn)
+        self._TypeOfAnt = "flying"
+        self._FoodCapacity = 5
+    
+    def ChooseCellToMoveTo(self):
+        pass
+
+    def GetDetails(self):
+        return f"{super().GetDetails()}, carrying {self._AmountOfFoodCarried} food, home nest is at {self._NestRow} {self._NestColumn}"
+
 class WorkerAnt(Ant):
     def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
         super().__init__(StartRow, StartColumn, NestInRow, NestInColumn)
@@ -544,6 +566,9 @@ class Nest(Entity):
                     if RNo2 < 2:
                         Ants.append(QueenAnt(self._Row, self._Column, self._Row, self._Column))
                         self._NumberOfQueens += 1
+                    elif RNo2 > 80:
+                        Ants.append(FlyingAnt(self._Row, self._Column, self._Row, self._Column))
+                        print('A flying ant has been born')
                     else:
                         Ants.append(WorkerAnt(self._Row, self._Column, self._Row, self._Column))
         Count = 0
