@@ -8,7 +8,8 @@ import random
 
 def Main():
     SimulationParameters = []
-    SimNo = input("Enter simulation number: ")
+    DisplaySimulationChoices()
+    SimNo = str(GetSimChoice())
     if SimNo == "1":
         SimulationParameters = [1, 5, 5, 500, 3, 5, 1000, 50]
     elif SimNo == "2":
@@ -21,7 +22,7 @@ def Main():
     Choice = ""
     while Choice != "9":
         DisplayMenu()
-        Choice = GetChoice()
+        Choice = str(GetChoice())
         if Choice == "1":
             print(ThisSimulation.GetDetails())
         elif Choice == "2":
@@ -60,13 +61,67 @@ def DisplayMenu():
     print()
     print("> ", end='')
 
+def DisplaySimulationChoices():
+    print()
+    print("Simulation 1 is a 5×5 grid with one nest. Five ants belong to that nest (one queen and four " \
+    "workers). At the start of the simulation the nest has 500 food units in it. There are three sources " \
+    " of food in the grid. It is possible that some of the food sources could be in the same cell as each " \
+    "other. The strength of a new pheromone is 1000 and the pheromone decay rate is " \
+    "50 per stage.")
+    print()
+    print("Simulation 2 is the same as simulation 1 except the pheromone decay rate is 100 per stage.")
+    print()
+    print("Simulation 3 is a 10×10 grid with one nest. Nine ants belong to that nest (one queen and eight " \
+    "workers). At the start of the simulation the nest has 500 food units in it. There are three sources " \
+    "of food in the grid. It is possible that some of the food sources could be in the same cell as each " \
+    "other. The strength of a new pheromone is 1000 and the pheromone decay rate is 25 per stage.")
+    print()
+    print("Simulation 4 is a 10×10 grid with two nests. Six ants belong to each nest (one queen and five " \
+    "workers). At the start of the simulation each nest has 500 food units in it. There are three sources " \
+    "of food in the grid. It is possible that some of the food sources could be in the same cell as each " \
+    "other. The strength of a new pheromone is 1000 and the pheromone decay rate is 25 per stage.")
+
+def GetSimChoice():
+    valid_input = False
+    while not valid_input:
+        SimNo = input("Enter simulation number: ")
+        try:
+            SimNo = int(SimNo)
+            if SimNo not in (1, 2, 3, 4, 5, 9):
+                print('Invalid option, please try again')
+            else:
+                valid_input = True
+        except:
+            print('Invalid input type, please try again')
+    return SimNo
+
 def GetChoice():
-    Choice = input()
+    valid_input = False
+    while not valid_input:
+        Choice = input()
+        try:
+            Choice = int(Choice)
+            if Choice not in (1, 2, 3, 4, 5, 9):
+                print('Invalid option, please try again')
+            else:
+                valid_input = True
+        except:
+            print('Invalid input type, please try again')
     return Choice
 
 def GetCellReference():
     print()
-    Row = int(input("Enter row number: "))
+    valid_input = False ####reusing previoud checking code, maybe add a get function tto make the check for range
+    while not valid_input:
+        Row = input("Enter row number: ")
+        try:
+            Row = int(Row)
+            if Row not in range ():
+                print('Invalid option, please try again')
+            else:
+                valid_input = True
+        except:
+            print('Invalid input type, please try again')
     Column = int(input("Enter column number: "))
     print()
     return Row, Column
@@ -110,6 +165,8 @@ class Simulation():
                 for N in self._Nests:
                     if N.GetRow() == Row and N.GetColumn() == Column:
                         Allowed = False
+                if self._Grid[self.__GetIndex(Row, Column)].GetAmountOfFood() > 0:
+                    Allowed = False
             self.AddFoodToCell(Row, Column,500)
 
     def SetUpANestAt(self, Row, Column):
@@ -255,6 +312,9 @@ class Simulation():
                     PheromonesToDelete.append(P)
             for P in PheromonesToDelete:
                 self._Pheromones.remove(P)
+            for C in self._Grid:
+                if C.GetAmountOfFood() > 0:
+                    C.UpdateFoodInCell(-(C.GetAmountOfFood()*0.1))
             for A in self._Ants:
                 A.AdvanceStage(self._Nests, self._Ants, self._Pheromones)
                 CurrentCell = self._Grid[self.__GetIndex(A.GetRow(), A.GetColumn())]
@@ -330,6 +390,7 @@ class Cell(Entity):
 
     def UpdateFoodInCell(self, Change):
         self._AmountOfFood += Change
+        if self._AmountOfFood < 0: self._AmountOfFood = 0
 
 class Ant(Entity):
     _NextAntID = 1
