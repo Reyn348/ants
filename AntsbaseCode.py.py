@@ -524,6 +524,10 @@ class ForagerAnt(Ant):
         self.TypeOfAnt = 'forager'
         self._FoodCapacity = 30
 
+    def ChooseCellToMoveTo(self, ListOfNeighbours, IndexOfNeighbourWithStrongestPheromone):
+        if Simulation.GetIndexOfNeighbourWithStrongestSmell () != 0:
+            pass
+
 class WorkerAnt(Ant):
     def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
         super().__init__(StartRow, StartColumn, NestInRow, NestInColumn)
