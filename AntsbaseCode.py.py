@@ -30,13 +30,13 @@ def Main():
             StartColumn = 0
             EndRow = 0
             EndColumn = 0
-            StartRow, StartColumn = GetCellReference()
-            EndRow, EndColumn = GetCellReference()
+            StartRow, StartColumn = GetCellReference(SimulationParameters)
+            EndRow, EndColumn = GetCellReference(SimulationParameters)
             print(ThisSimulation.GetAreaDetails(StartRow, StartColumn, EndRow, EndColumn))
         elif Choice == "3":
             Row = 0
             Column = 0
-            Row, Column = GetCellReference()
+            Row, Column = GetCellReference(SimulationParameters)
             print(ThisSimulation.GetCellDetails(Row, Column))
         elif Choice == "4":
             ThisSimulation.AdvanceStage(1)
@@ -109,20 +109,31 @@ def GetChoice():
             print('Invalid input type, please try again')
     return Choice
 
-def GetCellReference():
+def GetCellReference(SimulationParameters):
     print()
-    valid_input = False ####reusing previoud checking code, maybe add a get function tto make the check for range
+    valid_input = False
     while not valid_input:
         Row = input("Enter row number: ")
         try:
             Row = int(Row)
-            if Row not in range ():
+            if Row not in range (0, SimulationParameters[1]):
                 print('Invalid option, please try again')
             else:
                 valid_input = True
         except:
             print('Invalid input type, please try again')
-    Column = int(input("Enter column number: "))
+            valid_input = False
+    valid_input = False
+    while not valid_input:
+        Column = input("Enter column number: ")
+        try:
+            Column = int(Column)
+            if Column not in range (0, SimulationParameters[2]):
+                print('Invalid option, please try again')
+            else:
+                valid_input = True
+        except:
+            print('Invalid input type, please try again')
     print()
     return Row, Column
 
@@ -169,13 +180,29 @@ class Simulation():
                     Allowed = False
             self.AddFoodToCell(Row, Column,500)
 
-    def GetGridSize(self):
-        return self._NumberOfColumns
+    def GetIndexOfNeighbourWithStrongestSmell(self):
+        for A in self._Ants:
+            if A.GetTypeOfAnt() == 'forager':
+                Row = A.GetRow()
+                Column = A.getColumn()
+                Largest = 0
+                Index_Table = [[1, 2, 3],
+                                [4, 0, 6],
+                                [5, 7, 8]]
+                for i in range (-1, 1):
+                    for j in range (-1, 1):
+                        Index = self.__GetIndex(Row + i, Column + j)
+                        Prev = Largest
+                        Largest = max(Largest, 10*self._Grid[Index].GetAmountOfFood())
+                        if Largest != Prev:
+                            Best_Index = Index_Table[Row + i, Column + j]
+        return Best_Index
 
     def SetUpANestAt(self, Row, Column):
         self._Nests.append(Nest(Row, Column, self._StartingFoodInNest))
         self._Ants.append(QueenAnt(Row, Column, Row, Column))
-        for Worker in range(2, self._StartingAntsInNest + 1):
+        self._Ants.append(ForagerAnt(Row, Column, Row, Column))
+        for Worker in range(3, self._StartingAntsInNest + 1):
             self._Ants.append(WorkerAnt(Row, Column, Row, Column))
 
     def AddFoodToCell(self, Row, Column, Quantity):
@@ -321,7 +348,20 @@ class Simulation():
             for A in self._Ants:
                 A.AdvanceStage(self._Nests, self._Ants, self._Pheromones)
                 CurrentCell = self._Grid[self.__GetIndex(A.GetRow(), A.GetColumn())]
-                if A.GetFoodCarried() > 0 and A.IsAtOwnNest():
+                if A.GetTypeOfAnt() == 'flying':
+                    if A.GetAge() == 3:
+                        Allowed = False
+                        while Allowed == False:
+                            Allowed = True
+                            Rand_row = random.randint(1, self._NumberOfRows)
+                            Rand_col = random.randint(1, self._NumberOfColumns)
+                            for N in self._Nests:
+                                if N.GetRow() == Rand_row and N.GetColumn() == Rand_col:
+                                    Allowed = False
+                        self.SetUpANestAt(Rand_row, Rand_col)
+                        print(f'A new nest has been set up at ({Rand_row}, {Rand_col})')
+                        self._Ants.remove(A)
+                elif A.GetFoodCarried() > 0 and A.IsAtOwnNest():
                     self.AddFoodToNest(A.GetFoodCarried(), A.GetRow(), A.GetColumn())
                     A.UpdateFoodCarried(-A.GetFoodCarried())
                 elif CurrentCell.GetAmountOfFood() > 0 and A.GetFoodCarried() == 0 and A.GetFoodCapacity() > 0:
@@ -334,13 +374,6 @@ class Simulation():
                     if A.GetFoodCarried() > 0:
                         self.UpdateAntsPheromoneInCell(A)
                     A.ChooseCellToMoveTo(self.__GetIndicesOfNeighbours(A.GetRow(), A.GetColumn()), self.__GetIndexOfNeighbourWithStrongestPheromone(A.GetRow(), A.GetColumn()))
-                if A.GetTypeOfAnt() == 'flying':
-                    if A.GetAge() == 3:
-                        Rand_row = random.randint(0, Simulation.GetGridSize)
-                        Rand_col = random.randint(0, Simulation.GetGridSize)
-                        Rand_Index = Simulation.__GetIndex(Rand_row, Rand_col)
-                        for C in 
-
             for N in self._Nests:
                 self._Nests, self._Ants, self._Pheromones = N.AdvanceStage(self._Nests, self._Ants, self._Pheromones)
         if len(self._Ants) == 0:
@@ -484,6 +517,12 @@ class FlyingAnt(Ant):
 
     def GetDetails(self):
         return f"{super().GetDetails()}, carrying {self._AmountOfFoodCarried} food, home nest is at {self._NestRow} {self._NestColumn}"
+
+class ForagerAnt(Ant):
+    def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
+        super().__init__(StartRow, StartColumn, NestInRow, NestInColumn)
+        self.TypeOfAnt = 'forager'
+        self._FoodCapacity = 30
 
 class WorkerAnt(Ant):
     def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
