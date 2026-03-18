@@ -46,7 +46,10 @@ def Main():
             ThisSimulation.AdvanceStage(NumberOfStages)
             print(f"Simulation moved on {NumberOfStages} stages" + "\n")
         elif Choice == "6":
-            pass
+            ThisSimulation.RelocateAnt()
+            print('Ant relocated')
+            for A in ThisSimulation._Ants:
+                print(A.GetRow(), A.GetColumn())
         elif Choice == '9':
             if input('Are you sure you want to quit? Y/N ').upper() == 'N':
                 Choice = ""
@@ -349,16 +352,20 @@ class Simulation():
             Details += "\n\n"
         return Details
 
-    def  RelocateAnt(self):
-        Row = int(input('Please enter the row you would like to move the ant to: '))
-        Column = int(input('Please selec the column you would like to move the ant to: '))
+    def RelocateAnt(self):
         Valid_location = False
-        for A in self._Ants:
-            if A.GetRow() == Row and A.GetColumn == Column:
-                A.SetNewLocation(Row, Column)
-                Valid_location = True
-
-
+        while not Valid_location:
+            Ant_Row = int(input('Please enter the row of the ant you would like to move: '))
+            Ant_Column = int(input('Please enter the column of the ant you would like to move: '))
+            for A in self._Ants:
+                if A.GetRow() == Ant_Row and A.GetColumn() == Ant_Column:
+                    Move_Row = int(input('Please enter the row you would like to move the ant to: '))
+                    Move_Column = int(input('Please enter the column you would like to move the ant to: '))
+                    A.SetNewLocation(Move_Row, Move_Column)
+                    Valid_location = True
+                    break
+            if not Valid_location:
+                print('Invalid location, there is no ant here')
 
     def AdvanceStage(self, NumberOfStages):
         for Count in range(1, NumberOfStages + 1):
@@ -410,8 +417,8 @@ class Simulation():
         if len(self._Ants) == 0:
             self._EndSim = True
             self._EndReason = 'All the ants are dead'
-        for Row in range(1, self._NumberOfRows + 1):
-            for Column in range(1, self._NumberOfColumns + 1):
+        for Row in range(0, self._NumberOfRows - 1):
+            for Column in range(0, self._NumberOfColumns - 1):
                 if self._Grid[self.__GetIndex(Row, Column)].GetAmountOfFood() == 0:
                     self._NoFood = True
                 else:
