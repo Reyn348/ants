@@ -45,6 +45,8 @@ def Main():
             NumberOfStages = int(input("Enter number of stages to advance by: "))
             ThisSimulation.AdvanceStage(NumberOfStages)
             print(f"Simulation moved on {NumberOfStages} stages" + "\n")
+        elif Choice == "6":
+            pass
         elif Choice == '9':
             if input('Are you sure you want to quit? Y/N ').upper() == 'N':
                 Choice = ""
@@ -57,6 +59,7 @@ def DisplayMenu():
     print("3. Inspect cell")
     print("4. Advance one stage")
     print("5. Advance X stages")
+    print("6. Move a worker ant")
     print("9. Quit")
     print()
     print("> ", end='')
@@ -101,7 +104,7 @@ def GetChoice():
         Choice = input()
         try:
             Choice = int(Choice)
-            if Choice not in (1, 2, 3, 4, 5, 9):
+            if Choice not in (1, 2, 3, 4, 5, 6, 9):
                 print('Invalid option, please try again')
             else:
                 valid_input = True
@@ -187,6 +190,7 @@ class Simulation():
                 Row = A.GetRow()
                 Column = A.getColumn()
                 Largest = 0
+                Best_Index = 0
                 Index_Table = [[1, 2, 3],
                                 [4, 0, 6],
                                 [5, 7, 8]]
@@ -345,6 +349,17 @@ class Simulation():
             Details += "\n\n"
         return Details
 
+    def  RelocateAnt(self):
+        Row = int(input('Please enter the row you would like to move the ant to: '))
+        Column = int(input('Please selec the column you would like to move the ant to: '))
+        Valid_location = False
+        for A in self._Ants:
+            if A.GetRow() == Row and A.GetColumn == Column:
+                A.SetNewLocation(Row, Column)
+                Valid_location = True
+
+
+
     def AdvanceStage(self, NumberOfStages):
         for Count in range(1, NumberOfStages + 1):
             PheromonesToDelete = []
@@ -365,8 +380,8 @@ class Simulation():
                         Allowed = False
                         while Allowed == False:
                             Allowed = True
-                            Rand_row = random.randint(1, self._NumberOfRows+1)
-                            Rand_col = random.randint(1, self._NumberOfColumns+1)
+                            Rand_row = random.randint(0, self._NumberOfRows-1)
+                            Rand_col = random.randint(0, self._NumberOfColumns-1)
                             for N in self._Nests:
                                 if N.GetRow() == Rand_row and N.GetColumn() == Rand_col:
                                     Allowed = False
@@ -385,7 +400,8 @@ class Simulation():
                 else:
                     if A.GetFoodCarried() > 0:
                         self.UpdateAntsPheromoneInCell(A)
-                    if A.GetTypeOfAnt() == 'forager':
+                        A.ChooseCellToMoveTo(self.__GetIndicesOfNeighbours(A.GetRow(), A.GetColumn()), self.__GetIndexOfNeighbourWithWeakestPheromone(A.GetRow(), A.GetColumn()))
+                    elif A.GetTypeOfAnt() == 'forager':
                         A.ChooseCellToMoveTo(self.__GetIndicesOfNeighbours(A.GetRow(), A.GetColumn()), self.GetIndexOfNeighbourWithStrongestSmell(A.GetRow(), A.GetColumn()))
                     else:
                         A.ChooseCellToMoveTo(self.__GetIndicesOfNeighbours(A.GetRow(), A.GetColumn()), self.__GetIndexOfNeighbourWithWeakestPheromone(A.GetRow(), A.GetColumn()))
@@ -515,6 +531,9 @@ class Ant(Entity):
     
     def GetAge(self):
         return self._Stages
+    
+    def SetNewLocation(self, Row, Column):
+        pass
 
 class QueenAnt(Ant):
     def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
@@ -540,11 +559,24 @@ class ForagerAnt(Ant):
         self._FoodCapacity = 30
 
     def ChooseCellToMoveTo(self, ListOfNeighbours, IndexOfNeighbourWithStrongestSmell):
-        if IndexOfNeighbourWithStrongestSmell != 0:
+        Directions = ['North West', 'North', 'North East', 'West', 'East', 'South West', 'South', 'South East']
+        if self._AmountOfFoodCarried > 0:
+            if self._Row > self._NestRow:
+                self._Row -= 1
+            elif self._Row < self._NestRow:
+                self._Row += 1
+            if self._Column > self._NestColumn:
+                self._Column -= 1
+            elif self._Column < self._NestColumn:
+                self._Column += 1
+            print('Food found, moving towards nest')
+        elif IndexOfNeighbourWithStrongestSmell != 0:
             IndexToUse = ListOfNeighbours.index(IndexOfNeighbourWithStrongestSmell)
+            print(f'Forager ant has detected a smell and is moving {Directions[IndexToUse-1]}')
             self._Row, self._Column = self._ChangeCell(IndexToUse, self._Row, self._Column)
         else:
             IndexToUse = self._ChooseRandomNeighbour(ListOfNeighbours)
+            print('No nearby smells, forager ant is moving randomly')
             self._Row, self._Column = self._ChangeCell(IndexToUse, self._Row, self._Column)
 
 class WorkerAnt(Ant):
@@ -572,6 +604,10 @@ class WorkerAnt(Ant):
         else:
             IndexToUse = ListOfNeighbours.index(IndexOfNeighbourWithWeakestPheromone)
             self._Row, self._Column = self._ChangeCell(IndexToUse, self._Row, self._Column)
+    
+    def SetNewLocation(self, Row, Column):
+        self._Row = Row
+        self._Column = Column
 
 class Nest(Entity):
     _NextNestID = 1
