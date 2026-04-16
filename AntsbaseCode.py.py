@@ -63,6 +63,7 @@ def DisplayMenu():
     print("4. Advance one stage")
     print("5. Advance X stages")
     print("6. Move a worker ant")
+    print("7. View nests with low food")
     print("9. Quit")
     print()
     print("> ", end='')
@@ -107,7 +108,7 @@ def GetChoice():
         Choice = input()
         try:
             Choice = int(Choice)
-            if Choice not in (1, 2, 3, 4, 5, 6, 9):
+            if Choice not in (1, 2, 3, 4, 5, 6, 7, 9):
                 print('Invalid option, please try again')
             else:
                 valid_input = True
@@ -616,6 +617,19 @@ class WorkerAnt(Ant):
         self._Row = Row
         self._Column = Column
 
+class LazyAnt(WorkerAnt):
+    def __init__(self, StartRow, StartColumn, NestInRow, NestInColumn):
+        super().__init__(StartRow, StartColumn, NestInRow, NestInColumn)
+        self._TypeOfAnt = "lazy"
+        self._MissedTurns = 0
+    
+    def ChooseCellToMoveTo(self, ListOfNeighbours, IndexOfNeighbourWithWeakestPheromone):
+        Chance = random.randint(1, 2)
+        if Chance == 1:
+            self._MissedTurns += 1
+        elif Chance == 2:
+            return super().ChooseCellToMoveTo(ListOfNeighbours, IndexOfNeighbourWithWeakestPheromone)
+
 class Nest(Entity):
     _NextNestID = 1
 
@@ -624,6 +638,7 @@ class Nest(Entity):
         self._FoodLevel = StartFood
         self._NumberOfQueens = 1
         self._ID = Nest._NextNestID
+        self.DangerPheromone = False
         Nest._NextNestID += 1
 
     def ChangeFood(self, Change):
@@ -671,7 +686,9 @@ class Nest(Entity):
                     if RNo2 < 2:
                         Ants.append(QueenAnt(self._Row, self._Column, self._Row, self._Column))
                         self._NumberOfQueens += 1
-                    elif RNo2 > 80:
+                    if 2 <= RNo2 < 20:
+                        Ants.append(LazyAnt(self._Row, self._Column, self._Row, self._Column))
+                    elif RNo2 > 90:
                         Ants.append(FlyingAnt(self._Row, self._Column, self._Row, self._Column))
                         print('A flying ant has been born')
                     else:
@@ -710,6 +727,10 @@ class Pheromone(Entity):
 
     def GetBelongsTo(self):
         return self._BelongsTo
+
+class DangerPheromone(Pheromone):
+    def __init__(self, Row, Column, BelongsToAnt, InitialStrength, Decay):
+        super().__init__( Row, Column, BelongsToAnt, InitialStrength, Decay)
 
 if __name__ == "__main__":
     Main()
